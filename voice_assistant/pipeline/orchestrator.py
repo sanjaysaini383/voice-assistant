@@ -122,18 +122,17 @@ class VoicePipelineOrchestrator:
         ]
         try:
             done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
-            for t in pending:
-                t.cancel()
             for t in done:
                 exc = t.exception()
                 if exc:
                     raise exc
         except asyncio.CancelledError:
             logger.info("Orchestrator shutting down gracefully...")
+            raise
+        finally:
             for t in tasks:
                 t.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
-            raise
 
     @staticmethod
     def _drain_queue(q: asyncio.Queue[str]) -> None:
